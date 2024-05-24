@@ -13,51 +13,18 @@ from selenium_stealth import stealth
 import openai
 
 def main1():
-    folder_path = "/Users/shiro/Desktop"
-    jobName = "HELLOER"
-    file_path_cover_letter = os.path.join(folder_path, f"{jobName}_CL.pdf")
-    print(file_path_cover_letter)
+    options = Options()
+    options.add_experimental_option("detach", True)
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--window-size=1920,1080")  # Optional, but sometimes helpful for headless mode.
 
-    openai.api_key = "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"  # Use your API key
-    current_date = datetime.now().strftime("%B %d, %Y")
-    print("got current date")
-    prompt = (
-        "thiis is a test"
-    )
-    print("prompt given")
-    print()
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-    # Adjusted API call using the new interface
+    logIn(driver, "adatta18", "Quechua@2406")
 
-    prompt = (
-        f"This should be the starting of every cover letter - "
-        f"Asmit Datta"
-        f"1000 E Apache Blvd, Tempe AZ 85281"
-        f"new line"
-        f"{current_date}"
-        f"Get the details of the hiring manager, department from the job description"
-        f"Generate a compelling cover letter tailored to the following job description and my resume. this one is a test just generate anything you like any random cover letter"
-        f"Highlight how my skills and experiences match the job requirements, and emphasize why I am a worthy candidate for this position.\n\n"
-        f"make sure the formatting is done correctly with all the names and double check that all the information like name address etc is propoerly included in the cover letter"
-        f"Resume: blah blah blah"
-        f"Job Description:blah blah blah"
-    )
 
-    response = openai.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "user", "content": prompt},
-        ]
-    )
-    cover_letter_text = response.choices[0].message.content
-    cover_letter_text = cover_letter_text.encode('utf-8', 'replace').decode('utf-8')
-    print(cover_letter_text)
-
-def openNewTab(driver, url):
-    driver.execute_script("window.open('');")
-    driver.switch_to.window(driver.window_handles[-1])
-    driver.get(url)
-    time.sleep(5)
 
 
 def extract_text_from_pdf(pdf_path):
@@ -73,6 +40,24 @@ def extract_text_from_pdf(pdf_path):
     except:
         print("text could not be extracted from the pdgf")
 
+def logIn(driver, username, password):
+    driver.get("https://weblogin.asu.edu/cas/login?service=http"
+               "s%3A%2F%2Fweblogin.asu.edu%2Fcgi-bin%2Fcas-login%"
+               "3Fcallapp%3Dhttps%253A%252F%252Fwebapp4.asu.edu%2"
+               "52Fmyasu%252F%253Finit%253Dfalse")
+    user1 = driver.find_element(By.ID, "username")
+    user1.send_keys(username)
+    pass1 = driver.find_element(By.ID, "password")
+    pass1.send_keys(password, Keys.ENTER)
 
+    time.sleep(5)
 
+    iframe = driver.find_element(By.ID, "duo_iframe")
+    driver.switch_to.frame(iframe)
+    time.sleep(1)
+    print("switched to frame")
+    duo_push = driver.find_element(By.XPATH,
+                                   "//button[contains(@class, 'auth-button') and contains(@class, 'positive')]")
+    duo_push.click()
+    time.sleep(5)
 main1()

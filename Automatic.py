@@ -33,6 +33,7 @@ def main():
     options.add_experimental_option("detach", True)
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
+    options.add_argument("--headless")  # Run Chrome in headless mode.
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--window-size=1920,1080")  # Optional, but sometimes helpful for headless mode.
 
@@ -46,8 +47,6 @@ def main():
             renderer="Intel Iris OpenGL Engine")
 
     logIn(driver, asu_username, asu_password)
-
-    options.add_argument("--headless")  # Run Chrome in headless mode.
     openNewTab(driver, "https://shibboleth2.asu.edu"
                        "/idp/profile/SAML2/Unsolicited/"
                        "SSO?providerId=https%3A//sso.brassring.com"
@@ -67,6 +66,7 @@ def openNewTab(driver, url):
 
 
 def logIn(driver, username, password):
+    wait = WebDriverWait(driver, 10)
     driver.get("https://weblogin.asu.edu/cas/login?service=http"
                "s%3A%2F%2Fweblogin.asu.edu%2Fcgi-bin%2Fcas-login%"
                "3Fcallapp%3Dhttps%253A%252F%252Fwebapp4.asu.edu%2"
@@ -75,8 +75,12 @@ def logIn(driver, username, password):
     user1.send_keys(username)
     pass1 = driver.find_element(By.ID, "password")
     pass1.send_keys(password, Keys.ENTER)
-    time.sleep(15)
-
+    time.sleep(5)
+    iframe = driver.find_element(By.ID, "duo_iframe")
+    driver.switch_to.frame(iframe)
+    duo_push = wait.until(
+        EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'auth-button') and contains(@class, 'positive')]")))
+    duo_push.click()
 
 def advDisplay(driver, start_date):
     print(start_date)
@@ -292,13 +296,12 @@ def apply_to_job(driver, jobName, folder_path, resume_path):
             if option.get_attribute("aria-label") == "Searching ASU Website":
                 option.click()
                 break
-        time.sleep(3)
-        save_continue2 = driver.find_element(By.ID, "shownext")
+        save_continue2 = wait.until(EC.element_to_be_clickable((By.ID, "shownext")))
         save_continue2.click()
         time.sleep(5)
 
         # Adding resume
-        add_resume_link = driver.find_element(By.ID, "AddResumeLink")
+        add_resume_link = wait.until(EC.element_to_be_clickable((By.ID, "AddResumeLink")))
         add_resume_link.click()
         time.sleep(3)
 
@@ -327,7 +330,7 @@ def apply_to_job(driver, jobName, folder_path, resume_path):
         browse_cover_letter = driver.find_element(By.ID, "file")  # This may need to be adjusted if the input ID differs
         cover_letter_path = os.path.join(folder_path, f"{jobName}_CL.pdf")
         browse_cover_letter.send_keys(cover_letter_path)
-        time.sleep(5)
+        time.sleep(3)
 
         # Switch back to the main content after uploading the cover letter
         driver.switch_to.default_content()
@@ -335,25 +338,22 @@ def apply_to_job(driver, jobName, folder_path, resume_path):
         # going next page
         save_continue3 = driver.find_element(By.ID, "shownext")
         save_continue3.click()
-        time.sleep(3)
 
         # going next page
-        save_continue4 = driver.find_element(By.ID, "shownext")
+        save_continue4 = wait.until(EC.element_to_be_clickable((By.ID, "shownext")))
         save_continue4.click()
-        time.sleep(3)
 
         # going next page
-        save_continue5 = driver.find_element(By.ID, "shownext")
+        save_continue5 = wait.until(EC.element_to_be_clickable((By.ID, "shownext")))
         save_continue5.click()
-        time.sleep(3)
 
         # going next page
-        save_continue6 = driver.find_element(By.ID, "shownext")
+        save_continue6 = wait.until(EC.element_to_be_clickable((By.ID, "shownext")))
         save_continue6.click()
-        time.sleep(3)
+
 
         # going next page
-        save_continue7 = driver.find_element(By.ID, "shownext")
+        save_continue7 = wait.until(EC.element_to_be_clickable((By.ID, "shownext")))
         save_continue7.click()
         time.sleep(10)
 

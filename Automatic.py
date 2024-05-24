@@ -25,8 +25,10 @@ def main():
     # Extract the variables
     asu_username = user_data["asu_username"]
     asu_password = user_data["asu_password"]
-    resume_path = user_data["resume_path"]
-    start_date = user_data["start_date"]
+    # resume_path = user_data["resume_path"]
+    resume_path = "/Users/shiro/Desktop/Resume March24.pdf"
+    # start_date = user_data["start_date"]
+    start_date = "05/20/2024"
     folder_path = create_folder(base_path)
 
     options = Options()
@@ -46,8 +48,6 @@ def main():
             renderer="Intel Iris OpenGL Engine")
 
     logIn(driver, "adatta18", "Quechua@2406")
-
-    options.add_argument("--headless")  # Run Chrome in headless mode.
     openNewTab(driver, "https://shibboleth2.asu.edu"
                        "/idp/profile/SAML2/Unsolicited/"
                        "SSO?providerId=https%3A//sso.brassring.com"
@@ -83,6 +83,9 @@ def logIn(driver, username, password):
     duo_push = wait.until(
         EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'auth-button') and contains(@class, 'positive')]")))
     duo_push.click()
+    WebDriverWait(driver, 30).until(
+        EC.url_contains("myasu")  # Check part of the URL that indicates the dashboard
+    )
 
 def advDisplay(driver, start_date):
     print(start_date)

@@ -13,19 +13,13 @@ from selenium_stealth import stealth
 import openai
 
 def main1():
-    options = Options()
-    options.add_experimental_option("detach", True)
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option("useAutomationExtension", False)
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--window-size=1920,1080")  # Optional, but sometimes helpful for headless mode.
-
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-
-    logIn(driver, "adatta18", "Quechua@2406")
-
-
-
+    def process_input(user_input):
+        if user_input == "1":
+            return "Hello, user said 1\n"
+        elif user_input == "2":
+            return "Hello, user said 2\n"
+        else:
+            return "Something related to printing in the GUI\n"
 
 def extract_text_from_pdf(pdf_path):
     pdf_text = ""
@@ -60,4 +54,12 @@ def logIn(driver, username, password):
                                    "//button[contains(@class, 'auth-button') and contains(@class, 'positive')]")
     duo_push.click()
     time.sleep(5)
+
+def process_input(user_input):
+    if user_input == "1":
+        return "Hello, user said 1"
+    elif user_input == "2":
+        return "Hello, user said 2"
+    else:
+        return "Something related to printing in the GUI"
 main1()

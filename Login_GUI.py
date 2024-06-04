@@ -55,6 +55,3 @@ def start_login_gui():
 
     app.mainloop()
     return user_details
-
-
-

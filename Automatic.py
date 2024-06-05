@@ -30,23 +30,31 @@ ctk.set_default_color_theme("green")  # Set the color theme to green
 
 def start_login_gui():
     app = ctk.CTk()
-    app.geometry("600x400")
-    app.title("Login Details")
+    app.geometry("1200x400")
+    app.title("ASU JOB APPLICATION TOOL")
 
-    # Divide the window into two sections
+    # Define the frames
     left_frame = ctk.CTkFrame(master=app, width=300, height=400)
     left_frame.pack(side="left", fill="both", expand=True)
-    right_frame = ctk.CTkFrame(master=app, width=300, height=400)
+
+    right_frame = ctk.CTkFrame(master=app, width=900, height=400)
     right_frame.pack(side="right", fill="both", expand=True)
 
-    console_output = ctk.CTkTextbox(master=right_frame)
+    # Console output on the right
+    console_output = ctk.CTkTextbox(master=right_frame, font=('Courier', 14, 'normal'), spacing3=7)
     console_output.pack(pady=20, padx=20, fill="both", expand=True)
 
-    username_entry = ctk.CTkEntry(master=left_frame, placeholder_text="Username")
-    username_entry.pack(pady=10, padx=20)
+    # Inner frame for centralized content in the left frame
+    inner_frame = ctk.CTkFrame(master=left_frame)
+    inner_frame.pack(expand=True)
 
-    password_entry = ctk.CTkEntry(master=left_frame, placeholder_text="Password", show="*")
-    password_entry.pack(pady=10, padx=20)
+    # Entry for username
+    username_entry = ctk.CTkEntry(master=inner_frame, placeholder_text="Username", font=('Helvetica', 12))
+    username_entry.pack(pady=10, padx=20, expand=True)
+
+    # Entry for password
+    password_entry = ctk.CTkEntry(master=inner_frame, placeholder_text="Password", show="*", font=('Helvetica', 12))
+    password_entry.pack(pady=10, padx=20, expand=True)
 
     def choose_file():
         filename = filedialog.askopenfilename(initialdir="/", title="Select Resume File",
@@ -54,10 +62,10 @@ def start_login_gui():
         if filename:
             console_output.insert("end", f"Selected Resume: {filename}\n")
 
-    file_button = ctk.CTkButton(master=left_frame, text="Select Resume File", command=choose_file)
+    file_button = ctk.CTkButton(master=inner_frame, text="Select Resume File", command=choose_file)
     file_button.pack()
 
-    date_entry = ctk.CTkEntry(master=left_frame, placeholder_text="Start Date (MM/DD/YYYY)")
+    date_entry = ctk.CTkEntry(master=inner_frame, placeholder_text="Start Date (MM/DD/YYYY)")
     date_entry.pack(pady=10, padx=20)
 
     def on_continue():
@@ -65,16 +73,30 @@ def start_login_gui():
             "username": username_entry.get(),
             "password": password_entry.get(),
             "start_date": date_entry.get(),
-            "resume_path": "/Users/shiro/Desktop/Resume March24.pdf"  # This needs to change based on actual file selection
+            "resume_path": "/Users/shiro/Desktop/Resume March24.pdf"
         }
-        # Placeholder for starting automation; in actual use, replace `print` with the call to the automation function
         thread = threading.Thread(target=start_automation, args=(user_details, console_output))
         thread.start()
+        clear_frame(left_frame)
+        create_status_view(left_frame)
 
     continue_button = ctk.CTkButton(master=left_frame, text="Continue", command=on_continue)
     continue_button.pack(pady=20, padx=20)
 
     app.mainloop()
+def clear_frame(frame):
+    for widget in frame.winfo_children():
+        widget.destroy()
+
+def create_status_view(frame):
+    status_label = ctk.CTkLabel(master=frame, text="STATUS", font=('Courier', 14, 'bold'))
+    status_label.pack(pady=10, padx=20, anchor='w')
+
+    job_label = ctk.CTkLabel(master=frame, text="SAMPLE JOB", font=('Courier', 14, 'normal'))
+    job_label.pack(pady=10)
+
+    apply_button = ctk.CTkButton(master=frame, text="Apply", command=lambda: print("Apply clicked"))
+    apply_button.pack(pady=10)
 def start_automation(user_data, console_output):
     console_output.insert("end", "Starting automation...\n")
 

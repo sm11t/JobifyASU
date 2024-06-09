@@ -15,99 +15,27 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
 from webdriver_manager.chrome import ChromeDriverManager
 import customtkinter as ctk
-from tkinter import filedialog, simpledialog, messagebox
+from tkinter import filedialog, simpledialog, messagebox, Toplevel
 import threading
 import subprocess
 import platform
 
 
 ctk.set_appearance_mode("dark")  # Dark mode for the GUI
-ctk.set_default_color_theme("green")  # Green theme
+ctk.set_default_color_theme("dark-blue")  # Green theme
 
 
-ctk.set_appearance_mode("dark")  # Set the appearance mode to dark
-ctk.set_default_color_theme("green")  # Set the color theme to green
+def start_automation(user_data, console_output, app, left_frame):
+    username = user_data['username']
+    password = user_data['password']
+    start_date = user_data['start_date']
+    resume_path = user_data['resume_path']
+    base_path = user_data['base_path']
 
-def start_login_gui():
-    app = ctk.CTk()
-    app.geometry("1200x400")
-    app.title("ASU JOB APPLICATION TOOL")
-
-    # Define the frames
-    left_frame = ctk.CTkFrame(master=app, width=300, height=400)
-    left_frame.pack(side="left", fill="both", expand=True)
-
-    right_frame = ctk.CTkFrame(master=app, width=900, height=400)
-    right_frame.pack(side="right", fill="both", expand=True)
-
-    # Console output on the right
-    console_output = ctk.CTkTextbox(master=right_frame, font=('Courier', 14, 'normal'), spacing3=7)
-    console_output.pack(pady=20, padx=20, fill="both", expand=True)
-
-    # Inner frame for centralized content in the left frame
-    inner_frame = ctk.CTkFrame(master=left_frame)
-    inner_frame.pack(expand=True)
-
-    # Entry for username
-    username_entry = ctk.CTkEntry(master=inner_frame, placeholder_text="Username", font=('Helvetica', 12))
-    username_entry.pack(pady=10, padx=20, expand=True)
-
-    # Entry for password
-    password_entry = ctk.CTkEntry(master=inner_frame, placeholder_text="Password", show="*", font=('Helvetica', 12))
-    password_entry.pack(pady=10, padx=20, expand=True)
-
-    def choose_file():
-        filename = filedialog.askopenfilename(initialdir="/", title="Select Resume File",
-                                              filetypes=(("PDF files", "*.pdf"), ("All files", "*.*")))
-        if filename:
-            console_output.insert("end", f"Selected Resume: {filename}\n")
-
-    file_button = ctk.CTkButton(master=inner_frame, text="Select Resume File", command=choose_file)
-    file_button.pack()
-
-    date_entry = ctk.CTkEntry(master=inner_frame, placeholder_text="Start Date (MM/DD/YYYY)")
-    date_entry.pack(pady=10, padx=20)
-
-    def on_continue():
-        user_details = {
-            "username": username_entry.get(),
-            "password": password_entry.get(),
-            "start_date": date_entry.get(),
-            "resume_path": "/Users/shiro/Desktop/Resume March24.pdf"
-        }
-        thread = threading.Thread(target=start_automation, args=(user_details, console_output))
-        thread.start()
-        clear_frame(left_frame)
-        create_status_view(left_frame)
-
-    continue_button = ctk.CTkButton(master=left_frame, text="Continue", command=on_continue)
-    continue_button.pack(pady=20, padx=20)
-
-    app.mainloop()
-def clear_frame(frame):
-    for widget in frame.winfo_children():
-        widget.destroy()
-
-def create_status_view(frame):
-    status_label = ctk.CTkLabel(master=frame, text="STATUS", font=('Courier', 14, 'bold'))
-    status_label.pack(pady=10, padx=20, anchor='w')
-
-    job_label = ctk.CTkLabel(master=frame, text="SAMPLE JOB", font=('Courier', 14, 'normal'))
-    job_label.pack(pady=10)
-
-    apply_button = ctk.CTkButton(master=frame, text="Apply", command=lambda: print("Apply clicked"))
-    apply_button.pack(pady=10)
-def start_automation(user_data, console_output):
-    console_output.insert("end", "Starting automation...\n")
-
-    # Setup Chrome in headless mode
-    base_path = "/Users/shiro/Desktop"
-    resume_path = "/Users/shiro/Desktop/Resume March24.pdf"
-    start_date = "05/20/2024"
     folder_path = create_folder(base_path, console_output)
 
     options = Options()
-
+    options.add_argument("--headless")
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--disable-extensions")
     options.add_argument("--proxy-server='direct://'")
@@ -117,12 +45,15 @@ def start_automation(user_data, console_output):
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--no-sandbox')
     options.add_argument('--ignore-certificate-errors')
+    options.add_argument('--allow-running-insecure-content')
 
     options.add_experimental_option("detach", True)
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--window-size=1920,1080")
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36'
+    options.add_argument(f'user-agent={user_agent}')
 
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
@@ -133,7 +64,7 @@ def start_automation(user_data, console_output):
             webgl_vendor="Intel Inc.",
             renderer="Intel Iris OpenGL Engine")
 
-    logIn(driver, "adatta18", "Quechua@2406", console_output)
+    logIn(driver, username, password, console_output)
     openNewTab(driver, "https://shibboleth2.asu.edu"
                        "/idp/profile/SAML2/Unsolicited/"
                        "SSO?providerId=https%3A//sso.brassring.com"
@@ -142,7 +73,7 @@ def start_automation(user_data, console_output):
     time.sleep(10)
     advDisplay(driver, start_date)
     time.sleep(5)
-    newJob(driver, folder_path, resume_path, console_output)
+    newJob(driver, folder_path, resume_path, console_output, app, left_frame)
     driver.quit()
 def openNewTab(driver, url):
     driver.execute_script("window.open('');")
@@ -171,16 +102,28 @@ def logIn(driver, username, password, console_output):
         EC.url_contains("myasu")  # Check part of the URL that indicates the dashboard
     )
 def advDisplay(driver, start_date):
-    print(start_date)
-    advSearch = driver.find_element(By.LINK_TEXT, "Advanced Search")
-    advSearch.click()
-    dateinput = WebDriverWait(driver, 10).until(
-        EC.visibility_of_element_located((By.XPATH, "//input[contains(@class, 'datestring')]"))
-    )
+    try:
+        print(start_date)
+        advSearch = driver.find_element(By.LINK_TEXT, "Advanced Search")
+        advSearch.click()
+        dateinput = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located((By.XPATH, "//input[contains(@class, 'datestring')]"))
+        )
+    except TimeoutError:
+        # Take a screenshot if the element is not found
+        driver.get_screenshot_as_file("screenshot.png")
+        print("Screenshot taken as 'screenshot.png'")
+        raise  # Optionally re-raise the exception for further handling
+    except Exception as e:
+        # Handle other exceptions and take a screenshot
+        driver.get_screenshot_as_file("screenshot_error.png")
+        print(f"Error: {str(e)}. Screenshot taken as 'screenshot_error.png'")
+        raise  # Re-raise the exception if you want to handle it further up the stack
+
 
     dateinput.clear()
     dateinput.send_keys(start_date, Keys.ENTER)
-def newJob(driver, folder_path, resume_path, console_output):
+def newJob(driver, folder_path, resume_path, console_output, app, left_frame):
     jobs_count = driver.find_elements(By.XPATH, "//li[contains(@class, 'job baseColorPalette ng-scope')]")
 
     console_output.insert("end", f"Found {len(jobs_count)} job listings.\n")
@@ -190,7 +133,15 @@ def newJob(driver, folder_path, resume_path, console_output):
         try:
             link = driver.find_element(By.ID, jobID)
             jobName = link.text.strip()
-            console_output.insert("end", jobName, "\n")
+            # Container frame for each job
+            job_container = ctk.CTkFrame(master=left_frame)
+            job_container.pack(fill='both', padx=20, pady=5)
+
+            # Job name label
+            job_label = ctk.CTkLabel(master=job_container, text=f"Job: {jobName}", font=('Courier', 12), anchor='w')
+            job_label.pack(side='left', fill='x', expand=True)
+
+            console_output.insert("end",f" Job: {jobName}", "\n")
             print(jobName)
             url1 = link.get_attribute("href")
             openNewTab(driver, url1)  # Ensure this method correctly handles tab management
@@ -204,13 +155,13 @@ def newJob(driver, folder_path, resume_path, console_output):
                 driver.switch_to.window(driver.window_handles[1])  # Switch back to the main window
                 time.sleep(2)
                 continue  # Skip to the next job
-            extractInfo(driver, jobName, folder_path, resume_path, console_output)
+            extractInfo(driver, jobName, folder_path, resume_path, console_output, app, left_frame, job_container)
 
         except Exception as e:
             console_output.insert("end", f"An error occurred for {jobID}: {e}")
             driver.close()  # Ensure to close the tab on error
             driver.switch_to.window(driver.window_handles[0])  # Always switch back to the main window
-def extractInfo(driver, jobName, folder_path, resume_path, console_output):
+def extractInfo(driver, jobName, folder_path, resume_path, console_output, app, left_frame, job_container):
     # Dictionary to hold job details
     job_details = {}
 
@@ -248,7 +199,7 @@ def extractInfo(driver, jobName, folder_path, resume_path, console_output):
     cover_letter = generate_cover_letter("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", job_text, resume_text)
     save_cover_letter(folder_path, jobName, cover_letter, console_output)
     print("\n Inside extract drivers info cover letter saved \n")
-    finalize_cover_letter(driver, folder_path, jobName, console_output, resume_path)
+    finalize_cover_letter(driver, folder_path, jobName, console_output, resume_path, app, job_container)
     print("Cover letter finalised")
     # Close the current tab and switch back to the main tab
     driver.switch_to.window(driver.window_handles[1])
@@ -324,41 +275,78 @@ def save_cover_letter(folder_path, jobName, cover_letter, console_output):
         pdf.output(file_path)
     except Exception as e:
         print(f"Cover Letter could not be saved due to: {str(e)}\n")
+def finalize_cover_letter(driver, folder_path, jobName, console_output, resume_path, app, job_container):
+    # Event to control the flow, waiting for the user to click 'Apply'
+    user_action = "pending"
+    hyperlink_label = None
+    apply_button = None
+    cancel_button = None
+
+    continue_event = threading.Event()
+    cover_letter_path = os.path.join(folder_path, f"{jobName}_CL.pdf")
+    def update_gui():
+        nonlocal hyperlink_label, apply_button, cancel_button
+        try:
+                # Hyperlink to open the cover letter
+                hyperlink_label = ctk.CTkLabel(master=job_container, text="Open Cover Letter", text_color="green",
+                                               cursor="hand2", font=("Arial", 12, "underline"))
+                hyperlink_label.pack(side='left', padx=10)
+                hyperlink_label.bind("<Button-1>", open_cover_letter)
+
+                # Apply button
+                apply_button = ctk.CTkButton(master=job_container, text="Apply",
+                                             command=lambda: on_apply())
+                apply_button.pack(side='right')
+
+                cancel_button = ctk.CTkButton(master=job_container, text="Cancel",
+                                              command=on_cancel, fg_color='red', hover_color='dark red')
+                cancel_button.pack(side='right', padx=10)
+
+        except Exception as e:
+            console_output.insert("end", f"Error setting up job application GUI: {str(e)}\n")
 
 
-import threading
+    def remove_specific_widgets():
+        # Remove only specific widgets
+        hyperlink_label.pack_forget()
+        apply_button.pack_forget()
+        cancel_button.pack_forget()
+    def open_cover_letter(event=None):
+        if platform.system() == "Windows":
+            subprocess.run(["start", cover_letter_path], shell=True)
+        elif platform.system() == "Darwin":  # macOS
+            subprocess.run(["open", cover_letter_path])
+        else:  # Linux
+            subprocess.run(["xdg-open", cover_letter_path])
 
-def finalize_cover_letter(driver, folder_path, jobName, console_output, resume_path):
-    try:
-        cover_letter_path = os.path.join(folder_path, f"{jobName}_CL.pdf")
-        console_output.insert("end", f"Cover letter generated at: {cover_letter_path}\n")
-        console_output.insert("end", "Please review the cover letter and make any necessary changes.\n")
+    def display_result(text, color):
+        result_label = ctk.CTkLabel(master=job_container, text=text, text_color=color, font=('Courier', 12, 'bold'))
+        result_label.pack(side= 'right', pady=0, padx= 5)
 
-        # Create a threading.Event object to wait for the button click
-        continue_event = threading.Event()
+    def on_apply():
+        nonlocal user_action
+        user_action = "apply"
+        console_output.insert("end", f"\nApplying to job: {jobName}.\n")
+        remove_specific_widgets()
+        display_result("APPLIED", "green")
+        continue_event.set()
+    def on_cancel():
+        nonlocal user_action
+        user_action = "cancel"
+        console_output.insert("end", f"\nApplication cancelled for {jobName}.\n")
+        remove_specific_widgets()
+        display_result("CANCELLED", "red")
+        continue_event.set()  # Resume execution to move to the next job
 
-        # Function to handle button click and clean up the UI
-        def on_continue():
-            console_output.insert("end", f"Continuing with job application for {jobName}.\n")
-            job_label.destroy()  # Remove the label
-            continue_button.destroy()  # Remove the button
-            continue_event.set()  # Set the event to unblock the waiting thread
+    app.after(0, update_gui)
+    continue_event.wait()  # Wait for user action before proceeding
+    if user_action == "apply":
+        apply_to_job(driver, jobName, folder_path, resume_path)
+        console_output.insert("end", f"\nSuccesfully applied to job: {jobName}\n")
+    elif user_action == "cancel":
+        console_output.insert("end", f"Moving to next job.\n")
+        # Here you would move to the next job; implementation depends on your job loop/control flow
 
-        # Create a label for job name, styled as a green rectangle
-        job_label = ctk.CTkLabel(console_output.master, text=f"Job: {jobName}", text_color='white', bg_color='green', height=25, corner_radius=10)
-        job_label.pack(side="bottom", fill="x", padx=20, pady=(0, 5))
-
-        # Create and style the continue button
-        continue_button = ctk.CTkButton(console_output.master, text="Apply", command=on_continue, fg_color='green', hover_color='light green', text_color='white', corner_radius=10)
-        continue_button.pack(side="bottom", padx=20, pady=5)
-
-        # Wait for the button to be clicked
-        continue_event.wait()  # This will block the thread until the event is set
-        apply_to_job(driver, jobName, folder_path, resume_path)  # Proceed with job application
-
-    except Exception as e:
-        print(f"Error finalizing cover letter: {str(e)}\n")
-        return False
 
 def apply_to_job(driver, jobName, folder_path, resume_path):
     print(f"Applying to the job: {jobName}")
@@ -458,9 +446,12 @@ def apply_to_job(driver, jobName, folder_path, resume_path):
         # going next page
         save_continue7 = driver.find_element(By.ID, "shownext")
         save_continue7.click()
-        time.sleep(10)
+        time.sleep(3)
 
-        print(f"Successfully applied to the job: {jobName}\n")
+        apply = driver.find_element(By.ID, "save")
+        apply.click()
+        time.sleep(3)
+
     except Exception as e:
         print(f"Failed to apply to the job: {jobName} due to {e}")
 def open_file(path):
@@ -471,6 +462,107 @@ def open_file(path):
         subprocess.run(["open", path])
     else:  # Linux
         subprocess.run(["xdg-open", path])
+
+def start_login_gui():
+    app = ctk.CTk()
+
+    app.title("ASU JOB APPLICATION TOOL")
+    app.config(bg='white')  # Reset background color for main GUI
+
+
+    app.geometry("1200x675")
+    app.title("ASU JOB APPLICATION TOOL")
+
+    # Define the frames
+    global left_frame
+    left_frame = ctk.CTkFrame(master=app, width=300, height=400)
+    left_frame.pack(side="left", fill="both", expand=True)
+
+    right_frame = ctk.CTkFrame(master=app, width=900, height=400)
+    right_frame.pack(side="right", fill="both", expand=True)
+
+    # Console output on the right
+    console_output = ctk.CTkTextbox(master=right_frame, font=('Courier', 14, 'normal'), spacing3=7)
+    console_output.pack(pady=20, padx=20, fill="both", expand=True)
+
+    # Inner frame for centralized content in the left frame
+    inner_frame = ctk.CTkFrame(master=left_frame)
+    inner_frame.pack(expand=True)
+
+    # Entry for username
+    username_entry = ctk.CTkEntry(master=inner_frame, placeholder_text="Username", font=('Courier', 14), width=250)
+    username_entry.pack(pady=20, padx=20, expand=True)
+
+    # Entry for password
+    password_entry = ctk.CTkEntry(master=inner_frame, placeholder_text="Password", show="*", font=('Courier', 14), width=250)
+    password_entry.pack(pady=20, padx=20, expand=True)
+
+    def choose_file():
+        global resume_path
+        filename = filedialog.askopenfilename(initialdir="/", title="Select Resume File",
+                                              filetypes=(("PDF files", "*.pdf"), ("All files", "*.*")))
+        if filename:
+            resume_path = filename  # Update the global resume_path
+            console_output.insert("end", f"Resume Selected: {resume_path}\n")
+        else:
+            console_output.insert("end", f"! ! ! No Resume Selected ! ! !\n")
+
+
+    def choose_directory():
+        global base_path
+        directory = filedialog.askdirectory()  # Open a dialog to choose a directory
+        if directory:
+            base_path = directory  # Set the base_path to the selected directory
+            console_output.insert("end", f"Saving Cover Letters to: {base_path}\n")
+        else:
+            console_output.insert("end", f"! ! ! No Directory Selected ! ! !\n")
+
+
+    file_button = ctk.CTkButton(master=inner_frame, text="Select Resume File", command=choose_file,
+                                font=('Courier', 12))
+    file_button.pack(pady=20)
+
+    directory_button = ctk.CTkButton(master=inner_frame, text="Select Directory", command=choose_directory,
+                                     font=('Courier', 12))
+    directory_button.pack(pady=20)  # Make sure to pack this button as well
+
+    date_entry = ctk.CTkEntry(master=inner_frame, placeholder_text="Start Date (MM/DD/YYYY)", font=('Courier', 14), width=250)
+    date_entry.pack(pady=20, padx=20)
+
+
+
+    def on_continue():
+        global resume_path
+        global base_path
+        user_details = {
+            "username": username_entry.get(),
+            "password": password_entry.get(),
+            "start_date": date_entry.get(),
+            "resume_path": resume_path,
+            "base_path": base_path
+        }
+        console_output.insert("end", f"Searching for jobs posted since: {date_entry.get()} \n")
+        try:
+            thread = threading.Thread(target=start_automation, args=(user_details, console_output, app, left_frame))
+        except:
+            print("fiefe")
+        thread.start()
+        clear_frame(left_frame)
+        create_status_view(left_frame)
+
+    continue_button = ctk.CTkButton(master=left_frame, text="Continue", command=on_continue, font=('Courier', 12), text_color='white')
+    continue_button.pack(pady=20, padx=20)
+
+    app.mainloop()
+
+
+def clear_frame(frame):
+    for widget in frame.winfo_children():
+        widget.destroy()
+
+def create_status_view(frame):
+    status_label = ctk.CTkLabel(master=frame, text="STATUS", font=('Courier', 24, 'bold'), text_color='green')
+    status_label.pack(pady=10, padx=20, anchor='w')
 
 
 if __name__ == "__main__":

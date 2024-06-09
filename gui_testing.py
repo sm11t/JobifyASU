@@ -1,37 +1,30 @@
 import customtkinter as ctk
-from tkinter import scrolledtext
-import testing  # Import the testing module
+import subprocess
+import platform
 
 def main_gui():
     app = ctk.CTk()
     app.title("Input and Output Windows")
     app.geometry("800x400")
 
-    # Create a frame for input
-    input_frame = ctk.CTkFrame(master=app, width=390, height=400)
-    input_frame.place(x=0, y=0)
-
     # Create a frame for output
-    output_frame = ctk.CTkFrame(master=app, width=390, height=400)
-    output_frame.place(x=410, y=0)
+    output_frame = ctk.CTkFrame(master=app)
+    output_frame.place(relx=0.5, rely=0.5, anchor=ctk.CENTER)
+    file_path = "/Users/shiro/Desktop/Resume March24.pdf"
 
-    # Textbox for output
-    output_text = scrolledtext.ScrolledText(output_frame, width=45, height=20)
-    output_text.pack(pady=20, padx=20)
+    # Function to open the resume file
+    def open_resume(event=None):  # Added event parameter for binding
+        if platform.system() == "Windows":
+            subprocess.run(["start", file_path], shell=True)
+        elif platform.system() == "Darwin":  # macOS
+            subprocess.run(["open", file_path])
+        else:  # Linux
+            subprocess.run(["xdg-open", file_path])
 
-    # Function to handle input and update output
-    def handle_input():
-        user_input = entry.get()
-        result = testing.process_input(user_input)  # Use the function from testing.py
-        output_text.insert("end", f"{result}\n")
-
-    # Entry for input
-    entry = ctk.CTkEntry(input_frame)
-    entry.pack(pady=20, padx=20)
-
-    # Button to submit input
-    submit_button = ctk.CTkButton(input_frame, text="Submit", command=handle_input)
-    submit_button.pack(pady=10)
+    # Label styled like a hyperlink
+    hyperlink_label = ctk.CTkLabel(master=output_frame, text=file_path, text_color="green", cursor="hand2", font=("Arial", 14, "underline"))
+    hyperlink_label.pack(pady=20)
+    hyperlink_label.bind("<Button-1>", open_resume)  # Bind left mouse click to the open_resume function
 
     app.mainloop()
 

@@ -16,6 +16,7 @@ from selenium_stealth import stealth
 from webdriver_manager.chrome import ChromeDriverManager
 import customtkinter as ctk
 from tkinter import filedialog, simpledialog, messagebox, Toplevel
+from tkscrolledframe import ScrolledFrame
 import threading
 import subprocess
 import platform
@@ -127,6 +128,15 @@ def newJob(driver, folder_path, resume_path, console_output, app, left_frame):
     jobs_count = driver.find_elements(By.XPATH, "//li[contains(@class, 'job baseColorPalette ng-scope')]")
 
     console_output.insert("end", f"Found {len(jobs_count)} job listings.\n")
+    # Create ScrolledFrame inside left_frame
+    scrolled_frame = ScrolledFrame(left_frame, width=280, height=380)
+    scrolled_frame.pack(expand=True, fill="both")
+    scrolled_frame.bind_arrow_keys(app)
+    scrolled_frame.bind_scroll_wheel(app)
+    time.sleep(10)
+
+    # Get the display widget of the ScrolledFrame
+    left_frame = scrolled_frame.display_widget(ctk.CTkFrame)
 
     for i in range(0,len(jobs_count)):  # Ensures we do not exceed the list length
         jobID = f"Job_{i}"
@@ -134,8 +144,8 @@ def newJob(driver, folder_path, resume_path, console_output, app, left_frame):
             link = driver.find_element(By.ID, jobID)
             jobName = link.text.strip()
             # Container frame for each job
-            job_container = ctk.CTkFrame(master=left_frame)
-            job_container.pack(fill='both', padx=20, pady=5)
+            job_container = ctk.CTkFrame(master=left_frame, bg_color='black')
+            job_container.pack(fill='both', padx=20, pady=20)
 
             # Job name label
             job_label = ctk.CTkLabel(master=job_container, text=f"Job: {jobName}", font=('Courier', 12), anchor='w')
